@@ -28,25 +28,30 @@ app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
+// GET all shortURL - longURL pairs in urlDatabase
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 })
 
-
+// GET page for entering long url for shortening
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 })
 
+// GET longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
   res.render("urls_show", { shortURL, longURL });
 })
 
-app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("OK");
+// POST user input longURL for shortening
+app.post("/urls", (req, res) => {  
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  urlDatabase[shortURL] = longURL;  
+  res.redirect(`/urls/${shortURL}`);
 })
 
 app.get("/urls.json", (req, res) => {
@@ -54,9 +59,9 @@ app.get("/urls.json", (req, res) => {
 });
 
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
+// app.get("/hello", (req, res) => {
+//   res.send("<html><body>Hello <b>World</b></body></html>\n");
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
