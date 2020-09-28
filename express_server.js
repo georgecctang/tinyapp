@@ -4,7 +4,7 @@ const urlencoded = require("body-parser/lib/types/urlencoded");
 const app = express();
 const PORT = 8080; // default port 8080
 
-app.use(bodyParser, urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.set('view engine', 'ejs');
 
@@ -31,6 +31,11 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
   res.render("urls_show", { shortURL, longURL });
+})
+
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("OK");
 })
 
 app.get("/urls.json", (req, res) => {
