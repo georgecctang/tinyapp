@@ -6,6 +6,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 
 app.set('view engine', 'ejs');
 
@@ -31,20 +32,26 @@ app.get("/", (req, res) => {
 
 // GET all shortURL - longURL pairs in urlDatabase
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const username = req.cookies['username'];
+  const templateVars = { username, urls: urlDatabase };
   res.render("urls_index", templateVars);
 })
 
 // GET Input page for user input
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const username = req.cookies['username'];
+  const templateVars = { username };
+  res.render("urls_new", templateVars);
 })
 
 // GET longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
+  const username = req.cookies['username'];
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  res.render("urls_show", { shortURL, longURL });
+  const templateVars = { username, shortURL, longURL };
+  
+  res.render("urls_show", templateVars);
 })
 
 app.post("/urls/:shortURL", (req, res) => {
@@ -52,6 +59,7 @@ app.post("/urls/:shortURL", (req, res) => {
   const updatedURL = req.body.updatedURL;
   
   urlDatabase[shortURL] = updatedURL;
+
   res.redirect(`/urls/${shortURL}`);
 });
 
