@@ -34,7 +34,7 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 })
 
-// GET page for entering long url for shortening
+// GET Input page for user input
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 })
@@ -46,6 +46,14 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", { shortURL, longURL });
 })
 
+app.post("/urls/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL;
+  const updatedURL = req.body.updatedURL;
+  
+  urlDatabase[shortURL] = updatedURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
 // POST user input longURL for shortening
 app.post("/urls", (req, res) => {  
   const shortURL = generateRandomString();
@@ -54,8 +62,10 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 })
 
-app.post("/urls/:shortURL/delete", (req, res) => {  
-  let shortURL = req.params.shortURL;
+
+app.post("/urls/:shortURL/delete", (req, res) => { 
+  console.log('delet url...'); 
+  const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];  
   res.redirect(`/urls`);
 })
