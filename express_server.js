@@ -71,6 +71,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect(`/urls`);
 })
 
+app.post("/login", (req, res) => {
+  console.log('login...');
+  const username = req.body.username;
+  res.cookie('username', username);
+  res.redirect('/urls');
+})
+
 
 // GET redirect to webpage based on shortURL param input
 app.get("/u/:shortURL", (req, res) => {
