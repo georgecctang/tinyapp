@@ -45,7 +45,10 @@ app.get("/", (req, res) => {
 // GET All shortURL - longURL pairs in urlDatabase
 app.get("/urls", (req, res) => {
   // Obtain userId from cookie and retrieve email from user object
-  let userId = req.cookies.user_id;
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    res.redirect('/login');
+  }
   // console.log('userId', userId);  
   // console.log('user', userDatabase[userId]);
   let userEmail = userId ? userDatabase[userId].email : null;
@@ -56,12 +59,22 @@ app.get("/urls", (req, res) => {
 
 // GET Input page for user longURL input
 app.get("/urls/new", (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    res.redirect('/login');
+  }
+  const userEmail = userDatabase[userId].email;
   const templateVars = { userEmail };
   res.render("urls_new", templateVars);
 })
 
 // GET Page with longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    res.redirect('/login');
+  }
+  const userEmail = userDatabase[userId].email;
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
   const templateVars = { userEmail, shortURL, longURL };
