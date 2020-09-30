@@ -19,7 +19,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const user = {};
+const user = {
+  "a3dF1x": {
+    id: "a3dF1x",
+    email: "abc@email.com",
+    password: "abc"
+  }, 
+  "wgSA3F": {
+    id: "wgSA3F",
+    email: "def@email.com",
+    password: "def"
+  }
+};
+
 let userEmail = '';
 let userId = '';
 
@@ -34,25 +46,22 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   // Obtain userId from cookie and retrieve email from user object
   userId = req.cookies.user_id;
-  console.log('userId', userId);  
-  console.log('user', user[userId]);
+  // console.log('userId', userId);  
+  // console.log('user', user[userId]);
   userEmail = userId ? user[userId].email : null;
 
-  // const username = req.cookies['username'];
   const templateVars = { userEmail, urls: urlDatabase };
   res.render("urls_index", templateVars);
 })
 
 // GET Input page for user longURL input
 app.get("/urls/new", (req, res) => {
-  // const username = req.cookies['username'];
   const templateVars = { userEmail };
   res.render("urls_new", templateVars);
 })
 
 // GET Page with longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
-  // const username = req.cookies['username'];
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
   const templateVars = { userEmail, shortURL, longURL };
@@ -106,9 +115,21 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // POST User Login
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie('username', username);
-  res.redirect('/urls');
+  const { email, password } = req.body;
+  // console.log(email, password);
+  console.log(user);
+  for (let u of Object.values(user)) {
+    if (u.email === email) {
+      if (u.password === password) {
+        res.cookie('user_id', u.id);
+        res.redirect('/urls');
+      } else {
+        res.status(403).send('Incorrect password');
+      }
+    }
+  }
+
+  res.status(403).send('This email address is not associated with an account.');
 })
 
 // POST User Logout
