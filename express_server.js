@@ -23,11 +23,14 @@ const user = {};
 let userEmail = '';
 let userId = '';
 
+// ------------ GET ------------
+
+// GET Homepage
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 
-// GET all shortURL - longURL pairs in urlDatabase
+// GET All shortURL - longURL pairs in urlDatabase
 app.get("/urls", (req, res) => {
   // Obtain userId from cookie and retrieve email from user object
   userId = req.cookies.user_id;
@@ -40,14 +43,14 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 })
 
-// GET Input page for user input
+// GET Input page for user longURL input
 app.get("/urls/new", (req, res) => {
   // const username = req.cookies['username'];
   const templateVars = { userEmail };
   res.render("urls_new", templateVars);
 })
 
-// GET longURL based on shortURL param input
+// GET Page with longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
   // const username = req.cookies['username'];
   const shortURL = req.params.shortURL;
@@ -57,6 +60,26 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 })
 
+// GET redirect to longURL webpage based on shortURL param input
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+})
+
+// GET User register page
+app.get("/register", (req, res) => {
+  const templateVars = { userEmail: null };
+  res.render("register", templateVars);
+})
+
+app.get("/login", (req, res) => {
+  const templateVars = { userEmail: null}
+  res.render("login", templateVars);
+})
+
+// ------------ POST ------------
+
+// POST Update longURL of a shortURL
 app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const updatedURL = req.body.updatedURL;
@@ -66,7 +89,7 @@ app.post("/urls/:shortURL", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-// POST user input longURL for shortening
+// POST User input longURL for creating shortURL
 app.post("/urls", (req, res) => {  
   const shortURL = randomstring.generate(6);
   const longURL = req.body.longURL;
@@ -74,46 +97,39 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 })
 
-
+// POST: Delete shortURL: longURL data in urlDatabase
 app.post("/urls/:shortURL/delete", (req, res) => { 
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];  
   res.redirect(`/urls`);
 })
 
+// POST User Login
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie('username', username);
   res.redirect('/urls');
 })
 
+// POST User Logout
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/urls");
 })
 
-
-// GET redirect to webpage based on shortURL param input
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
-})
-
-app.get("/register", (req, res) => {
-  const templateVars = { userEmail: null };
-  res.render("urls_register", templateVars);
-})
-
-
+// POST User register
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+  // return error if either email or password is missing
   if (!email || !password) {
     return res.status(404).send('Both email address and password are required.');
   }
+  // return error if registration email already exists
   if (isEmailTaken(user, email)) {
     return res.status(404).send('This email address is already associated with an account.');
   }
 
+  // Generate random user id
   const id = randomstring.generate(6);
   
   // Add user to user with id as key
@@ -133,6 +149,7 @@ app.post("/register", (req, res) => {
 //   res.send("<html><body>Hello <b>World</b></body></html>\n");
 // });
 
+// ------------ LISTEN ------------
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
