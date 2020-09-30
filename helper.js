@@ -1,10 +1,10 @@
-const isEmailTaken = function(userDb, registerEmail) {
+const getUserWithEmail = function(userDb, email) {
   for (let user of Object.values(userDb)) {
-    if (user.email === registerEmail) {
-      return true;
+    if (user.email === email) {
+      return user;
     }
   }
-  return false;
+  return null;
 }
 
-module.exports = { isEmailTaken };
+module.exports = { getUserWithEmail };

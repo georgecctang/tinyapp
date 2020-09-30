@@ -1,9 +1,11 @@
+'use strict';
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const randomstring = require('randomstring');
 
-const { isEmailTaken } = require("./helper");
+const { getUserWithEmail } = require("./helper");
 
 const urlencoded = require("body-parser/lib/types/urlencoded");
 const app = express();
@@ -19,21 +21,19 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const user = {
+const userDatabase = {
   "a3dF1x": {
     id: "a3dF1x",
-    email: "abc@email.com",
-    password: "abc"
+    email: "aaa@email.com",
+    password: "aaa"
   }, 
   "wgSA3F": {
     id: "wgSA3F",
-    email: "def@email.com",
-    password: "def"
+    email: "bbb@email.com",
+    password: "bbb"
   }
 };
 
-let userEmail = '';
-let userId = '';
 
 // ------------ GET ------------
 
@@ -45,10 +45,10 @@ app.get("/", (req, res) => {
 // GET All shortURL - longURL pairs in urlDatabase
 app.get("/urls", (req, res) => {
   // Obtain userId from cookie and retrieve email from user object
-  userId = req.cookies.user_id;
+  let userId = req.cookies.user_id;
   // console.log('userId', userId);  
-  // console.log('user', user[userId]);
-  userEmail = userId ? user[userId].email : null;
+  // console.log('user', userDatabase[userId]);
+  let userEmail = userId ? userDatabase[userId].email : null;
 
   const templateVars = { userEmail, urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -117,20 +117,19 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   // console.log(email, password);
-  console.log(user);
-  for (let u of Object.values(user)) {
-    if (u.email === email) {
-      if (u.password === password) {
-        res.cookie('user_id', u.id);
-        res.redirect('/urls');
-      } else {
-        res.status(403).send('Incorrect password');
-      }
-    }
-  }
+  let user = getUserWithEmail(userDatabase, email); 
 
-  res.status(403).send('This email address is not associated with an account.');
-})
+  if (user) {
+    if (user.password === password) {
+      res.cookie('user_id', user.id);
+      res.redirect('/urls');
+    } else {
+      res.status(403).send('Incorrect password');
+    }
+  } else {
+    res.status(403).send('This email address is not associated with an account.');
+  }
+});
 
 // POST User Logout
 app.post("/logout", (req, res) => {
@@ -146,7 +145,7 @@ app.post("/register", (req, res) => {
     return res.status(404).send('Both email address and password are required.');
   }
   // return error if registration email already exists
-  if (isEmailTaken(user, email)) {
+  if (getUserWithEmail(userDatabase, email)) {
     return res.status(404).send('This email address is already associated with an account.');
   }
 
@@ -154,9 +153,9 @@ app.post("/register", (req, res) => {
   const id = randomstring.generate(6);
   
   // Add user to user with id as key
-  user[id] = { id, email, password };
+  userDatabase[id] = { id, email, password };
 
-  console.log(user);
+  // console.log(user);
   // create cookie
   res.cookie('user_id', id);
   res.redirect('/urls');
