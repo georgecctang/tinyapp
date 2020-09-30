@@ -1,6 +1,10 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const randomstring = require('randomstring');
+
+const { isEmailTaken } = require("./helper");
+
 const urlencoded = require("body-parser/lib/types/urlencoded");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -15,18 +19,9 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const userDataBase = {};
-
-const generateRandomString = () => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const charactersLength = characters.length;
-  let result = '';
-  // Fix lenght to 6
-  for (let i = 0; i < 6; i++) {
-     result += characters[Math.floor(Math.random() * charactersLength)];
-  }
-  return result;
-}
+const user = {};
+let userEmail = '';
+let userId = '';
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -34,24 +29,30 @@ app.get("/", (req, res) => {
 
 // GET all shortURL - longURL pairs in urlDatabase
 app.get("/urls", (req, res) => {
-  const username = req.cookies['username'];
-  const templateVars = { username, urls: urlDatabase };
+  // Obtain userId from cookie and retrieve email from user object
+  userId = req.cookies.user_id;
+  // console.log('userId', userId);
+  // console.log('user', user[userId]);
+  userEmail = userId ? user[userId].email : null;
+
+  // const username = req.cookies['username'];
+  const templateVars = { userEmail, urls: urlDatabase };
   res.render("urls_index", templateVars);
 })
 
 // GET Input page for user input
 app.get("/urls/new", (req, res) => {
-  const username = req.cookies['username'];
-  const templateVars = { username };
+  // const username = req.cookies['username'];
+  const templateVars = { userEmail };
   res.render("urls_new", templateVars);
 })
 
 // GET longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
-  const username = req.cookies['username'];
+  // const username = req.cookies['username'];
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL];
-  const templateVars = { username, shortURL, longURL };
+  const templateVars = { userEmail, shortURL, longURL };
   
   res.render("urls_show", templateVars);
 })
@@ -67,7 +68,7 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // POST user input longURL for shortening
 app.post("/urls", (req, res) => {  
-  const shortURL = generateRandomString();
+  const shortURL = randomstring.generate(6);
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;  
   res.redirect(`/urls/${shortURL}`);
@@ -75,7 +76,6 @@ app.post("/urls", (req, res) => {
 
 
 app.post("/urls/:shortURL/delete", (req, res) => { 
-  console.log('delet url...'); 
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];  
   res.redirect(`/urls`);
@@ -88,7 +88,7 @@ app.post("/login", (req, res) => {
 })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 })
 
@@ -100,14 +100,30 @@ app.get("/u/:shortURL", (req, res) => {
 })
 
 app.get("/register", (req, res) => {
-  const templateVars = { username: null };
+  const templateVars = { userEmail: null };
   res.render("urls_register", templateVars);
 })
 
-// app.post("/register", (req, res) => {
-//   console.log(req.body);
-//   res.redirect('/urls');
-// })
+
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(404).send('Both email address and password are required.');
+  }
+  if (isEmailTaken(user, email)) {
+    return res.status(404).send('This email address is already associated with an account.');
+  }
+
+  const id = randomstring.generate(6);
+  
+  // Add user to user with id as key
+  user[id] = { id, email, password };
+
+  console.log(user);
+  // create cookie
+  res.cookie('user_id', id);
+  res.redirect('/urls');
+})
 
 // app.get("/urls.json", (req, res) => {
 //   res.json(urlDatabase);
