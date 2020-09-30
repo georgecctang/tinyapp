@@ -11,17 +11,21 @@
       </div>
     </div>
     <% if(!userEmail) { %>
-    <form class="form-inline align-items-center" action="/login" method="POST">
+    <form class="form-inline align-items-center" action="/register" method="GET">
       <div class="form-group mb-2">
-        <input class="form-control" type="text" name="userEmail" style="width: 300px; margin: 1em" placeholder="Enter Username">
-        <button type="submit" class="btn btn-outline-dark">Login</button>
+        <button type="submit" class="btn btn-outline-dark" style="margin: 0.25em">Register</button>
+      </div>
+    </form>
+    <form class="form-inline align-items-center" action="/login" method="GET">
+      <div class="form-group mb-2">
+        <button type="submit" class="btn btn-outline-dark" style="margin: 0.25em">Login</button>
       </div>
     </form>
     <% } else { %>
       <form class="form-inline align-items-center" action="/logout" method="POST">
         <div class="form-group mb-2">
           <span style="margin: 1em">Loggin In As: <%= userEmail %></span>
-          <button type="submit" class="btn btn-outline-dark">Logout</button>
+          <button type="submit" class="btn btn-outline-dark" style="margin: 0.25em">Logout</button>
         </div> 
       </form>
     <% } %>

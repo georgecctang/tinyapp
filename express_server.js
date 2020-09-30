@@ -34,8 +34,8 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   // Obtain userId from cookie and retrieve email from user object
   userId = req.cookies.user_id;
-  // console.log('userId', userId);
-  // console.log('user', user[userId]);
+  console.log('userId', userId);  
+  console.log('user', user[userId]);
   userEmail = userId ? user[userId].email : null;
 
   // const username = req.cookies['username'];
