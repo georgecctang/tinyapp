@@ -17,8 +17,10 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "a3dF1x" }, 
+  "9sm5xK": { longURL: "http://www.google.com", userID: "a3dF1x"},
+  "asD32b": { longURL: "http://www.cnn.com", userID: "wgSA3F"},
+  "qfDa15": { longURL: "http://www.espn.com", userID: "wgSA3F"}
 };
 
 const userDatabase = {
@@ -51,9 +53,9 @@ app.get("/urls", (req, res) => {
   }
   // console.log('userId', userId);  
   // console.log('user', userDatabase[userId]);
-  let userEmail = userId ? userDatabase[userId].email : null;
-
-  const templateVars = { userEmail, urls: urlDatabase };
+  let userEmail = userDatabase[userId].email;
+  const templateVars = { userId, userEmail, urls: urlDatabase };
+  console.log(userId, userEmail);
   res.render("urls_index", templateVars);
 })
 
