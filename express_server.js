@@ -116,8 +116,15 @@ app.get("/login", (req, res) => {
 
 // GET redirect to longURL webpage based on shortURL param input
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+  let shortURL = req.params.shortURL;
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    urlDatabase[shortURL].visitCount += 1;
+    res.redirect(longURL);
+  } else {
+    return res.status(404).send('<h3>Error: Invalid URL</h3>');
+  }
+
 })
 
 // ------------ POST ------------
@@ -134,7 +141,8 @@ app.post("/urls", (req, res) => {
     const shortURL = randomstring.generate(6);
     const longURL = req.body.longURL;
     const dateCreated = Date();
-    urlDatabase[shortURL] = { longURL, userID, dateCreated };
+    const visitCount = 0;
+    urlDatabase[shortURL] = { longURL, userID, dateCreated, visitCount };
     res.redirect(`/urls/${shortURL}`);
   } else {
     return;
