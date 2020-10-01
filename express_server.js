@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const randomstring = require('randomstring');
+const bcrypt = require('bcrypt');
 
 const { getUserWithEmail } = require("./helper");
 
@@ -27,12 +28,12 @@ const userDatabase = {
   "a3dF1x": {
     id: "a3dF1x",
     email: "aaa@email.com",
-    password: "aaa"
+    password: bcrypt.hashSync('aaa', 10)
   }, 
   "wgSA3F": {
     id: "wgSA3F",
     email: "bbb@email.com",
-    password: "bbb"
+    password: bcrypt.hashSync('bbb', 10)
   }
 };
 
@@ -164,7 +165,7 @@ app.post("/login", (req, res) => {
   let user = getUserWithEmail(userDatabase, email); 
 
   if (user) {
-    if (user.password === password) {
+    if (bcrypt.compareSync(password, user.password)) {
       res.cookie('user_id', user.id);
       res.redirect('/urls');
     } else {
@@ -196,8 +197,11 @@ app.post("/register", (req, res) => {
   // Generate random user id
   const id = randomstring.generate(6);
   
+  // Generate hashed password
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
   // Add user to user with id as key
-  userDatabase[id] = { id, email, password };
+  userDatabase[id] = { id, email, password: hashedPassword };
 
   // create cookie
   res.cookie('user_id', id);
