@@ -8,7 +8,7 @@ const cookieSession = require("cookie-session");
 const randomstring = require('randomstring');
 const bcrypt = require('bcrypt');
 
-const { getUserWithEmail } = require("./helper");
+const { getUserByEmail } = require("./helpers");
 
 const urlencoded = require("body-parser/lib/types/urlencoded");
 const app = express();
@@ -43,17 +43,6 @@ const userDatabase = {
     password: bcrypt.hashSync('bbb', 10)
   }
 };
-
-// Return an array of shortURL for a particular user
-const urlsForUser = function(id) {
-  const result = [];
-  for (let url in urlDatabase) {
-    if (urlDatabase[url].userID === id) {
-      result.push(url);
-    }
-  }
-  return result;
-}
 
 // ------------ GET ------------
 
@@ -92,11 +81,15 @@ app.get("/urls/:shortURL", (req, res) => {
   if (!userID) {
     return res.status(403).send('Access denied: Please log in.');
   }
-  // check if shortURL is owned by user
+  // check if shortURL exists
   const shortURL = req.params.shortURL;
-  const urlList = urlsForUser(userID);
-  if (!urlList.includes(shortURL)) {
-    return res.status(403).send('Access denied: This url does not belong to you.');
+
+  if (!urlDatabase[shortURL]) {
+    return res.status(403).send('Access denied: This URL does not exist.');
+    
+  }
+  if (urlDatabase[shortURL].userID !== userID) {
+    return res.status(403).send('Access denied: You do not have access to this URL.')
   }
 
   const userEmail = userDatabase[userID].email;
@@ -155,9 +148,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   }
   
   const shortURL = req.params.shortURL;
-  const urlList = urlsForUser(userID);
-  if (!urlList.includes(shortURL)) {
-    return res.status(403).send('Access denied: This url does not belong to you.');
+
+  if (!urlDatabase[shortURL]) {
+    return res.status(403).send('Access denied: This URL does not exist.');
+    
+  }
+  if (urlDatabase[shortURL].userID !== userID) {
+    return res.status(403).send('Access denied: You do not have access to this URL.')
   }
   
   delete urlDatabase[shortURL];  
@@ -167,13 +164,13 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // POST User Login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  let user = getUserWithEmail(userDatabase, email); 
-  if (user) {
-    if (bcrypt.compareSync(password, user.password)) {
-      req.session.user_id = user.id;
+  const userID = getUserByEmail(email, userDatabase); 
+  if (userID) {
+    if (bcrypt.compareSync(password, userDatabase[userID].password)) {
+      req.session.user_id = userID;
       res.redirect('/urls');
     } else {
-      return res.status(403).send('Incorrect password');
+      return res.status(403).send('Incorrect password.');
     }
   } else {
     return res.status(403).send('This email address is not associated with an account.');
@@ -194,7 +191,7 @@ app.post("/register", (req, res) => {
     return res.status(404).send('Both email address and password are required.');
   }
   // return error if registration email already exists
-  if (getUserWithEmail(userDatabase, email)) {
+  if (getUserByEmail(email, userDatabase)) {
     return res.status(404).send('This email address is already associated with an account.');
   }
 
