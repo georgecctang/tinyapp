@@ -8,7 +8,7 @@ const cookieSession = require("cookie-session");
 const randomstring = require('randomstring');
 const bcrypt = require('bcrypt');
 
-const { getUserByEmail } = require("./helpers");
+const { getUserByEmail, checkLogin, authenticateURLAccess } = require("./helpers");
 
 const urlencoded = require("body-parser/lib/types/urlencoded");
 const app = express();
@@ -48,7 +48,7 @@ const userDatabase = {
 
 // GET Homepage
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/login");
 });
 
 // GET All shortURL - longURL pairs in urlDatabase
@@ -76,29 +76,27 @@ app.get("/urls/new", (req, res) => {
 
 // GET Page with longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
-  // Send message if user not logged in
-  const userID = req.session.user_id;
-  if (!userID) {
-    return res.status(403).send('Access denied: Please log in.');
-  }
-  // check if shortURL exists
-  const shortURL = req.params.shortURL;
 
-  if (!urlDatabase[shortURL]) {
-    return res.status(403).send('Access denied: This URL does not exist.');
-    
-  }
-  if (urlDatabase[shortURL].userID !== userID) {
-    return res.status(403).send('Access denied: You do not have access to this URL.')
+  // check if user user is logged in
+  const isLogin = checkLogin(req, res);
+  
+  // authenticate URL access only if user is logged in
+  if (isLogin === true) {
+    const isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
   }
 
-  const userEmail = userDatabase[userID].email;
-  const longURL = urlDatabase[shortURL].longURL;
-  const templateVars = { userEmail, shortURL, longURL };
-  res.render("urls_show", templateVars);
+  // render show page only if user is logged in 
+  if (isLogin === true && isAuthenticated === true) {
+    const userID = req.session.user_id;
+    const shortURL = req.params.shortURL;
+    const userEmail = userDatabase[userID].email;
+    const longURL = urlDatabase[shortURL].longURL;
+    const templateVars = { userEmail, shortURL, longURL };
+    res.render("urls_show", templateVars);
+  } else {
+    return;
+  }
 })
-
-
 
 // GET User register page
 app.get("/register", (req, res) => {
@@ -107,8 +105,12 @@ app.get("/register", (req, res) => {
 })
 
 app.get("/login", (req, res) => {
-  const templateVars = { userEmail: null}
-  res.render("login", templateVars);
+  const userID = req.session.user_id;
+  if (userID) {
+    res.redirect('/urls');
+  } else {
+    res.render("login", { userEmail: null});
+  }
 })
 
 // GET redirect to longURL webpage based on shortURL param input
@@ -122,7 +124,13 @@ app.get("/u/:shortURL", (req, res) => {
 
 // POST post new longURL and create shortURL
 app.post("/urls", (req, res) => {  
+  // Deny request if user not logged in
   const userID = req.session.user_id;
+  if (!userID) {
+    return res.status(403).send("Access denied: Please log in.");
+  }
+
+  // Create new random string as short URL
   const shortURL = randomstring.generate(6);
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = { longURL, userID };
@@ -135,30 +143,26 @@ app.post("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const updatedURL = req.body.updatedURL;
   urlDatabase[shortURL].longURL = updatedURL;
-  // res.redirect(`/urls/${shortURL}`);
   res.redirect(`/urls/${shortURL}`);
 });
 
 
 // POST / DELETE shortURL: longURL data in urlDatabase
 app.post("/urls/:shortURL/delete", (req, res) => { 
-  const userID = req.session.user_id;
-  if (!userID) {
-    return res.status(403).send("Access denied: Please log in.");
-  }
-  
-  const shortURL = req.params.shortURL;
 
-  if (!urlDatabase[shortURL]) {
-    return res.status(403).send('Access denied: This URL does not exist.');
-    
-  }
-  if (urlDatabase[shortURL].userID !== userID) {
-    return res.status(403).send('Access denied: You do not have access to this URL.')
-  }
+  const isLogin = checkLogin(req, res);
   
-  delete urlDatabase[shortURL];  
-  res.redirect(`/urls`);
+  if (isLogin === true) {
+    const isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
+  }
+
+  if (isLogin === true && isAuthenticated === true) {
+    const shortURL = req.params.shortURL;
+    delete urlDatabase[shortURL];  
+    res.redirect(`/urls`);
+  } else {
+    return;
+  }
 })
 
 // POST User Login
