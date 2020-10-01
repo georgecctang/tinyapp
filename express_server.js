@@ -36,6 +36,18 @@ const userDatabase = {
   }
 };
 
+// Return an array of shortURL for a particular user
+const urlsForUser = function(id) {
+  const result = [];
+  for (let url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      result.push(url);
+    }
+  }
+  return result;
+}
+
+
 
 // ------------ GET ------------
 
@@ -51,11 +63,9 @@ app.get("/urls", (req, res) => {
   if (!userID) {
     res.redirect('/login');
   }
-  // console.log('userID', userID);  
-  // console.log('user', userDatabase[userID]);
+  console.log(urlsForUser(userID));
   let userEmail = userDatabase[userID].email;
   const templateVars = { userID, userEmail, urls: urlDatabase };
-  console.log(userID, userEmail);
   res.render("urls_index", templateVars);
 })
 
@@ -80,7 +90,6 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars = { userEmail, shortURL, longURL };
-  console.log('get', templateVars);
   res.render("urls_show", templateVars);
 })
 
@@ -117,13 +126,10 @@ app.post("/urls", (req, res) => {
 
 // POST Update longURL of a shortURL
 app.post("/urls/:shortURL", (req, res) => {
-  console.log('req.body', req.body);
 
   const shortURL = req.params.shortURL;
   const updatedURL = req.body.updatedURL;
   urlDatabase[shortURL].longURL = updatedURL;
-  console.log('updating url...');  
-  console.log('post', urlDatabase[shortURL]);
   // res.redirect(`/urls/${shortURL}`);
   res.redirect(`/urls/${shortURL}`);
 });
@@ -139,7 +145,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // POST User Login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  // console.log(email, password);
   let user = getUserWithEmail(userDatabase, email); 
 
   if (user) {
@@ -178,7 +183,6 @@ app.post("/register", (req, res) => {
   // Add user to user with id as key
   userDatabase[id] = { id, email, password };
 
-  // console.log(user);
   // create cookie
   res.cookie('user_id', id);
   res.redirect('/urls');
