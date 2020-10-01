@@ -61,9 +61,8 @@ app.get("/urls", (req, res) => {
   // Obtain userID from cookie and retrieve email from user object
   const userID = req.cookies.user_id;
   if (!userID) {
-    res.redirect('/login');
-  }
-  console.log(urlsForUser(userID));
+    res.redirect('/login')
+  };
   let userEmail = userDatabase[userID].email;
   const templateVars = { userID, userEmail, urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -82,12 +81,19 @@ app.get("/urls/new", (req, res) => {
 
 // GET Page with longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
+  // Send message if user not logged in
   const userID = req.cookies.user_id;
   if (!userID) {
-    res.redirect('/login');
+    return res.status(403).send('Access denied: Please log in.');
   }
-  const userEmail = userDatabase[userID].email;
+  // check if shortURL is owned by user
   const shortURL = req.params.shortURL;
+  const urlList = urlsForUser(userID);
+  if (!urlList.includes(shortURL)) {
+    return res.status(403).send('Access denied: This url does not belong to you.');
+  }
+
+  const userEmail = userDatabase[userID].email;
   const longURL = urlDatabase[shortURL].longURL;
   const templateVars = { userEmail, shortURL, longURL };
   res.render("urls_show", templateVars);
@@ -115,7 +121,7 @@ app.get("/u/:shortURL", (req, res) => {
 // ------------ POST ------------
 
 
-// POST User post new longURL and create shortURL
+// POST post new longURL and create shortURL
 app.post("/urls", (req, res) => {  
   const userID = req.cookies.user_id;
   const shortURL = randomstring.generate(6);
@@ -137,7 +143,17 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // POST / DELETE shortURL: longURL data in urlDatabase
 app.post("/urls/:shortURL/delete", (req, res) => { 
+  const userID = req.cookies.user_id;
+  if (!userID) {
+    return res.status(403).send("Access denied: Please log in.");
+  }
+  
   const shortURL = req.params.shortURL;
+  const urlList = urlsForUser(userID);
+  if (!urlList.includes(shortURL)) {
+    return res.status(403).send('Access denied: This url does not belong to you.');
+  }
+  
   delete urlDatabase[shortURL];  
   res.redirect(`/urls`);
 })
@@ -162,7 +178,7 @@ app.post("/login", (req, res) => {
 // POST User Logout
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 })
 
 // POST User register
