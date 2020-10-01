@@ -25,10 +25,10 @@ app.use(cookieSession({
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "a3dF1x", dateCreated: '1/1/2020' }, 
-  "9sm5xK": { longURL: "http://www.google.com", userID: "a3dF1x", dateCreated: '1/2/2020'},
-  "asD32b": { longURL: "http://www.cnn.com", userID: "wgSA3F", dateCreated: '1/3/2020' },
-  "qfDa15": { longURL: "http://www.espn.com", userID: "wgSA3F", dateCreated: '1/4/2020' }
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "a3dF1x", dateCreated: '1/1/2020', visitCount: 0 }, 
+  "9sm5xK": { longURL: "http://www.google.com", userID: "a3dF1x", dateCreated: '1/2/2020', visitCount: 0 },
+  "asD32b": { longURL: "http://www.cnn.com", userID: "wgSA3F", dateCreated: '1/3/2020', visitCount: 0 },
+  "qfDa15": { longURL: "http://www.espn.com", userID: "wgSA3F", dateCreated: '1/4/2020', visitCount: 0 }
 };
 
 const userDatabase = {
