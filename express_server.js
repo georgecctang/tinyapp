@@ -99,7 +99,7 @@ app.get("/login", (req, res) => {
 
 // GET redirect to longURL webpage based on shortURL param input
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 })
 
