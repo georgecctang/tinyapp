@@ -168,10 +168,10 @@ app.post("/login", (req, res) => {
       res.cookie('user_id', user.id);
       res.redirect('/urls');
     } else {
-      res.status(403).send('Incorrect password');
+      return res.status(403).send('Incorrect password');
     }
   } else {
-    res.status(403).send('This email address is not associated with an account.');
+    return res.status(403).send('This email address is not associated with an account.');
   }
 });
 
