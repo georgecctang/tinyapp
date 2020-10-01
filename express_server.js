@@ -2,7 +2,9 @@
 
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require("cookie-parser");
+// const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
+
 const randomstring = require('randomstring');
 const bcrypt = require('bcrypt');
 
@@ -12,8 +14,13 @@ const urlencoded = require("body-parser/lib/types/urlencoded");
 const app = express();
 const PORT = 8080; // default port 8080
 
+
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+// app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['YRajCWKX2M', '2Ia4GWeVj5']
+}));
 
 app.set('view engine', 'ejs');
 
@@ -48,8 +55,6 @@ const urlsForUser = function(id) {
   return result;
 }
 
-
-
 // ------------ GET ------------
 
 // GET Homepage
@@ -60,9 +65,9 @@ app.get("/", (req, res) => {
 // GET All shortURL - longURL pairs in urlDatabase
 app.get("/urls", (req, res) => {
   // Obtain userID from cookie and retrieve email from user object
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   if (!userID) {
-    res.redirect('/login')
+    return res.redirect('/login')
   };
   let userEmail = userDatabase[userID].email;
   const templateVars = { userID, userEmail, urls: urlDatabase };
@@ -71,9 +76,9 @@ app.get("/urls", (req, res) => {
 
 // GET Input page for user longURL input
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   if (!userID) {
-    res.redirect('/login');
+    return res.redirect('/login');
   }
   const userEmail = userDatabase[userID].email;
   const templateVars = { userEmail };
@@ -83,7 +88,7 @@ app.get("/urls/new", (req, res) => {
 // GET Page with longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
   // Send message if user not logged in
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   if (!userID) {
     return res.status(403).send('Access denied: Please log in.');
   }
@@ -124,7 +129,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 // POST post new longURL and create shortURL
 app.post("/urls", (req, res) => {  
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const shortURL = randomstring.generate(6);
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = { longURL, userID };
@@ -144,7 +149,7 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // POST / DELETE shortURL: longURL data in urlDatabase
 app.post("/urls/:shortURL/delete", (req, res) => { 
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   if (!userID) {
     return res.status(403).send("Access denied: Please log in.");
   }
@@ -163,10 +168,10 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   let user = getUserWithEmail(userDatabase, email); 
-
+  console.log(user);
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
-      res.cookie('user_id', user.id);
+      req.session.user_id = user.id;
       res.redirect('/urls');
     } else {
       return res.status(403).send('Incorrect password');
@@ -178,7 +183,7 @@ app.post("/login", (req, res) => {
 
 // POST User Logout
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 })
 
@@ -204,7 +209,7 @@ app.post("/register", (req, res) => {
   userDatabase[id] = { id, email, password: hashedPassword };
 
   // create cookie
-  res.cookie('user_id', id);
+  req.session.user_id = id;
   res.redirect('/urls');
 })
 
