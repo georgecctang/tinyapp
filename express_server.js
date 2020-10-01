@@ -56,7 +56,7 @@ app.get("/urls", (req, res) => {
   // Obtain userID from cookie and retrieve email from user object
   const userID = req.session.user_id;
   if (!userID) {
-    return res.redirect('/login')
+    return res.redirect('/login');
   };
   let userEmail = userDatabase[userID].email;
   const templateVars = { userID, userEmail, urls: urlDatabase };
@@ -79,10 +79,11 @@ app.get("/urls/:shortURL", (req, res) => {
 
   // check if user user is logged in
   const isLogin = checkLogin(req, res);
-  
+  let isAuthenticated; 
+
   // authenticate URL access only if user is logged in
   if (isLogin === true) {
-    const isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
+    isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
   }
 
   // render show page only if user is logged in 
@@ -124,37 +125,56 @@ app.get("/u/:shortURL", (req, res) => {
 
 // POST post new longURL and create shortURL
 app.post("/urls", (req, res) => {  
-  // Deny request if user not logged in
-  const userID = req.session.user_id;
-  if (!userID) {
-    return res.status(403).send("Access denied: Please log in.");
-  }
+  // Deny request if user not logged in  
+  const isLogin = checkLogin(req, res);
 
   // Create new random string as short URL
-  const shortURL = randomstring.generate(6);
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL] = { longURL, userID };
-  res.redirect(`/urls/${shortURL}`);
+  if (isLogin === true) {
+    const userID = req.session.user_id;
+    const shortURL = randomstring.generate(6);
+    const longURL = req.body.longURL;
+    urlDatabase[shortURL] = { longURL, userID };
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    return;
+  }
+
 })
 
 // POST Update longURL of a shortURL
 app.post("/urls/:shortURL", (req, res) => {
+  // check if user user is logged in
+  const isLogin = checkLogin(req, res);
+  let isAuthenticated; 
 
-  const shortURL = req.params.shortURL;
-  const updatedURL = req.body.updatedURL;
-  urlDatabase[shortURL].longURL = updatedURL;
-  res.redirect(`/urls/${shortURL}`);
+  // authenticate URL access only if user is logged in
+  if (isLogin === true) {
+    isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
+  }
+
+  if (isLogin === true && isAuthenticated === true) {
+    const shortURL = req.params.shortURL;
+    const updatedURL = req.body.updatedURL;
+    urlDatabase[shortURL].longURL = updatedURL;
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    return;
+  }
 });
 
 
 // POST / DELETE shortURL: longURL data in urlDatabase
 app.post("/urls/:shortURL/delete", (req, res) => { 
 
+  // check if user user is logged in
   const isLogin = checkLogin(req, res);
-  
+  let isAuthenticated; 
+
+  // authenticate URL access only if user is logged in
   if (isLogin === true) {
-    const isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
+    isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
   }
+
 
   if (isLogin === true && isAuthenticated === true) {
     const shortURL = req.params.shortURL;
@@ -174,10 +194,10 @@ app.post("/login", (req, res) => {
       req.session.user_id = userID;
       res.redirect('/urls');
     } else {
-      return res.status(403).send('Incorrect password.');
+      return res.status(403).send('<h3>Error: Incorrect password</h3>');
     }
   } else {
-    return res.status(403).send('This email address is not associated with an account.');
+    return res.status(403).send('<h3>Error: This email address is not associated with an account.</h3>');
   }
 });
 
@@ -192,11 +212,11 @@ app.post("/register", (req, res) => {
   const { email, password } = req.body;
   // return error if either email or password is missing
   if (!email || !password) {
-    return res.status(404).send('Both email address and password are required.');
+    return res.status(404).send('<h3>Error: Both email address and password are required.</h3>');
   }
   // return error if registration email already exists
   if (getUserByEmail(email, userDatabase)) {
-    return res.status(404).send('This email address is already associated with an account.');
+    return res.status(404).send('<h3>Error: This email address is already associated with an account.</h3>');
   }
 
   // Generate random user id
@@ -213,13 +233,13 @@ app.post("/register", (req, res) => {
   res.redirect('/urls');
 })
 
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
+// ERROR Handling
 
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
+app.get("/:path", (req, res) => {
+  res.status(404).send('<h3>Error: Not Found</h3>');
+})
+
+
 
 // ------------ LISTEN ------------
 app.listen(PORT, () => {

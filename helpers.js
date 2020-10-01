@@ -14,7 +14,7 @@ const checkLogin = function(req, res) {
   const userID = req.session.user_id;
   // Send error message if not logged in
   if (!userID) {
-    return res.status(403).send('Access denied: Please log in.');
+    return res.status(403).send('<h3>Access denied: Please log in.</h3>');
   }
   return true;
 }
@@ -27,12 +27,12 @@ const authenticateURLAccess = function(req, res, urlDb) {
 
   // check if shortURL exists
   if (!urlDb[shortURL]) {
-    return res.status(403).send('Error: This URL does not exist.');
+    return res.status(403).send('<h3>Error: This URL does not exist.</h3>');
   }
 
   // check if the user has access to this URL
   if (urlDb[shortURL].userID !== userID) {
-    return res.status(403).send('Access denied: You do not have access to this URL.')
+    return res.status(403).send('<h3>Access denied: You do not have access to this URL.</h3>')
   }
 
   return true;
