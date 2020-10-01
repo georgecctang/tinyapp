@@ -168,7 +168,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   let user = getUserWithEmail(userDatabase, email); 
-  console.log(user);
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
       req.session.user_id = user.id;
