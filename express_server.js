@@ -17,10 +17,10 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "a3dF1x" }, 
-  "9sm5xK": { longURL: "http://www.google.com", userID: "a3dF1x"},
-  "asD32b": { longURL: "http://www.cnn.com", userID: "wgSA3F"},
-  "qfDa15": { longURL: "http://www.espn.com", userID: "wgSA3F"}
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "a3dF1x", dateCreated: '1/1/2020' }, 
+  "9sm5xK": { longURL: "http://www.google.com", userID: "a3dF1x", dateCreated: '1/2/2020'},
+  "asD32b": { longURL: "http://www.cnn.com", userID: "wgSA3F", dateCreated: '1/3/2020' },
+  "qfDa15": { longURL: "http://www.espn.com", userID: "wgSA3F", dateCreated: '1/4/2020' }
 };
 
 const userDatabase = {
@@ -61,11 +61,11 @@ app.get("/urls", (req, res) => {
   // Obtain userID from cookie and retrieve email from user object
   const userID = req.cookies.user_id;
   if (!userID) {
-    res.redirect('/login')
+    return res.redirect('/login')
   };
   let userEmail = userDatabase[userID].email;
   const templateVars = { userID, userEmail, urls: urlDatabase };
-  res.render("urls_index", templateVars);
+  return res.render("urls_index", templateVars);
 })
 
 // GET Input page for user longURL input
@@ -126,7 +126,8 @@ app.post("/urls", (req, res) => {
   const userID = req.cookies.user_id;
   const shortURL = randomstring.generate(6);
   const longURL = req.body.longURL;
-  urlDatabase[shortURL] = { longURL, userID };
+  const dateCreated = Date();
+  urlDatabase[shortURL] = { longURL, userID, dateCreated };
   res.redirect(`/urls/${shortURL}`);
 })
 
