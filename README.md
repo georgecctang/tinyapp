@@ -4,10 +4,13 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
+Users can register with their email address.
+!["Register Page"](./docs/register-page.png)
+
 The index page will show all URLs created and owned by the user. Also shown are the creation date, total visits and unique visits.
 !["URLs Index Page"](./docs/urls-index-page.png)
 
-Users can also change where the short URL points to.
+Users can also change where the short URL points to without the need to creating a new one.
 !["URLs Edit Page"](./docs/urls-edit-page.png)
 
 ## Dependencies
