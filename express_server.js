@@ -28,13 +28,13 @@ const urlDatabase = {
   "b2xVn2": { 
     longURL: "http://www.lighthouselabs.ca", 
     userID: "a3dF1x", 
-    dateCreated: '1/1/2020',
+    dateCreated: 'Thu Oct 01 2020 21:47:06 GMT-0400 (Eastern Daylight Time)',
     uniqueVisitCount: 0, 
     totalVisitCount: 0 }, 
   "9sm5xK": { 
     longURL: "http://www.google.com", 
     userID: "a3dF1x", 
-    dateCreated: '1/2/2020',
+    dateCreated: 'Thu Oct 01 2020 21:47:06 GMT-0400 (Eastern Daylight Time)',
     uniqueVisitCount: 0,
     totalVisitCount: 0 }
 };
@@ -94,10 +94,8 @@ app.get("/urls/:shortURL", (req, res) => {
     const userID = req.session.user_id;
     const shortURL = req.params.shortURL;
     const userEmail = userDatabase[userID].email;
-    const longURL = urlDatabase[shortURL].longURL;
-    const totalVisitCount = urlDatabase[shortURL].totalVisitCount;
-    const uniqueVisitCount = urlDatabase[shortURL].uniqueVisitCount;
-    const templateVars = { userEmail, shortURL, longURL, totalVisitCount, uniqueVisitCount };
+
+    const templateVars = { userEmail, shortURL, url: urlDatabase[shortURL] };
     res.render("urls_show", templateVars);
   } else {
     return;
@@ -135,7 +133,7 @@ app.get("/u/:shortURL", (req, res) => {
       req.session[shortURL] = true;
       urlDatabase[shortURL].uniqueVisitCount += 1;
     }
-    
+
     const longURL = urlDatabase[req.params.shortURL].longURL;
     res.redirect(longURL);
   } else {
@@ -184,7 +182,7 @@ app.post("/urls/:shortURL", (req, res) => {
     const shortURL = req.params.shortURL;
     const updatedURL = req.body.updatedURL;
     urlDatabase[shortURL].longURL = updatedURL;
-    res.redirect(`/urls/${shortURL}`);
+    res.redirect(`/urls`);
   } else {
     return;
   }
@@ -217,15 +215,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const userID = getUserByEmail(email, userDatabase); 
+  
   if (userID) {
+    // check the match between input and database password
     if (bcrypt.compareSync(password, userDatabase[userID].password)) {
       req.session.user_id = userID;
       res.redirect('/urls');
     } else {
-      return res.status(403).send('<h3>Error: Incorrect password</h3>');
+      return res.status(403).send('<h3>Access Denied: Incorrect password</h3>');
     }
   } else {
-    return res.status(403).send('<h3>Error: This email address is not associated with an account.</h3>');
+    return res.status(403).send('<h3>Access Denied: This email address is not associated with an account.</h3>');
   }
 });
 
