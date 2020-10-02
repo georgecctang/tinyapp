@@ -25,10 +25,18 @@ app.use(cookieSession({
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "a3dF1x", dateCreated: '1/1/2020', visitCount: 0 }, 
-  "9sm5xK": { longURL: "http://www.google.com", userID: "a3dF1x", dateCreated: '1/2/2020', visitCount: 0 },
-  "asD32b": { longURL: "http://www.cnn.com", userID: "wgSA3F", dateCreated: '1/3/2020', visitCount: 0 },
-  "qfDa15": { longURL: "http://www.espn.com", userID: "wgSA3F", dateCreated: '1/4/2020', visitCount: 0 }
+  "b2xVn2": { 
+    longURL: "http://www.lighthouselabs.ca", 
+    userID: "a3dF1x", 
+    dateCreated: '1/1/2020',
+    uniqueVisitCount: 0, 
+    totalVisitCount: 0 }, 
+  "9sm5xK": { 
+    longURL: "http://www.google.com", 
+    userID: "a3dF1x", 
+    dateCreated: '1/2/2020',
+    uniqueVisitCount: 0,
+    totalVisitCount: 0 }
 };
 
 const userDatabase = {
@@ -36,11 +44,6 @@ const userDatabase = {
     id: "a3dF1x",
     email: "aaa@email.com",
     password: bcrypt.hashSync('aaa', 10)
-  }, 
-  "wgSA3F": {
-    id: "wgSA3F",
-    email: "bbb@email.com",
-    password: bcrypt.hashSync('bbb', 10)
   }
 };
 
@@ -86,13 +89,15 @@ app.get("/urls/:shortURL", (req, res) => {
     isAuthenticated = authenticateURLAccess(req, res, urlDatabase);
   }
 
-  // render show page only if user is logged in 
+  // render show page only if user is logged in and authenticated
   if (isLogin === true && isAuthenticated === true) {
     const userID = req.session.user_id;
     const shortURL = req.params.shortURL;
     const userEmail = userDatabase[userID].email;
     const longURL = urlDatabase[shortURL].longURL;
-    const templateVars = { userEmail, shortURL, longURL };
+    const totalVisitCount = urlDatabase[shortURL].totalVisitCount;
+    const uniqueVisitCount = urlDatabase[shortURL].uniqueVisitCount;
+    const templateVars = { userEmail, shortURL, longURL, totalVisitCount, uniqueVisitCount };
     res.render("urls_show", templateVars);
   } else {
     return;
@@ -116,10 +121,22 @@ app.get("/login", (req, res) => {
 
 // GET redirect to longURL webpage based on shortURL param input
 app.get("/u/:shortURL", (req, res) => {
+  
   let shortURL = req.params.shortURL;
+  
+  // renders only if shortURL is valid
   if (urlDatabase[shortURL]) {
+    // Increase total visit count by 1
+    urlDatabase[shortURL].totalVisitCount += 1;
+
+    // Increase uniqueVisitCount only if visited by new vistiors
+    // Set cookie with shortURL as key to keep track of repeating visitors
+    if (!req.session[shortURL]) {
+      req.session[shortURL] = true;
+      urlDatabase[shortURL].uniqueVisitCount += 1;
+    }
+    
     const longURL = urlDatabase[req.params.shortURL].longURL;
-    urlDatabase[shortURL].visitCount += 1;
     res.redirect(longURL);
   } else {
     return res.status(404).send('<h3>Error: Invalid URL</h3>');
@@ -135,14 +152,16 @@ app.post("/urls", (req, res) => {
   // Deny request if user not logged in  
   const isLogin = checkLogin(req, res);
 
-  // Create new random string as short URL
   if (isLogin === true) {
     const userID = req.session.user_id;
+    // Create new random string as short URL
     const shortURL = randomstring.generate(6);
+
     const longURL = req.body.longURL;
     const dateCreated = Date();
-    const visitCount = 0;
-    urlDatabase[shortURL] = { longURL, userID, dateCreated, visitCount };
+    const totalVisitCount = 0;
+    const uniqueVisitCount = 0;
+    urlDatabase[shortURL] = { longURL, userID, dateCreated, totalVisitCount, uniqueVisitCount };
     res.redirect(`/urls/${shortURL}`);
   } else {
     return;
