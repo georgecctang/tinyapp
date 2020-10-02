@@ -39,8 +39,8 @@ const urlDatabase = {
 const userDatabase = {
   "a3dF1x": {
     id: "a3dF1x",
-    email: "aaa@email.com",
-    password: bcrypt.hashSync('aaa', 10)
+    email: "test@email.com",
+    password: bcrypt.hashSync('test', 10)
   }
 };
 
