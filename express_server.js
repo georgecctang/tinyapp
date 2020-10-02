@@ -101,12 +101,23 @@ app.get("/urls/:shortURL", (req, res) => {
 
 // GET User register page
 app.get("/register", (req, res) => {
-  const templateVars = { userEmail: null };
-  res.render("register", templateVars);
+  
+  // check if user already logged in
+  const userID = req.session.user_id;
+
+  if (userID) {
+    res.redirect('/urls');
+  } else {
+    res.render("register", { userEmail: null});
+  }
+
 });
 
 app.get("/login", (req, res) => {
+
+  // check if user already logged in
   const userID = req.session.user_id;
+  
   if (userID) {
     res.redirect('/urls');
   } else {
