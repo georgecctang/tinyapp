@@ -2,7 +2,6 @@
 
 const express = require("express");
 const bodyParser = require("body-parser");
-// const cookieParser = require("cookie-parser");
 const cookieSession = require("cookie-session");
 
 const randomstring = require('randomstring');
@@ -10,13 +9,11 @@ const bcrypt = require('bcrypt');
 
 const { getUserByEmail, checkLogin, authenticateURLAccess } = require("./helpers");
 
-const urlencoded = require("body-parser/lib/types/urlencoded");
 const app = express();
 const PORT = 8080; // default port 8080
 
 
 app.use(bodyParser.urlencoded({extended: true}));
-// app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
   keys: ['YRajCWKX2M', '2Ia4GWeVj5']
@@ -25,15 +22,15 @@ app.use(cookieSession({
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  "b2xVn2": { 
-    longURL: "http://www.lighthouselabs.ca", 
-    userID: "a3dF1x", 
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "a3dF1x",
     dateCreated: 'Thu Oct 01 2020 21:47:06 GMT-0400 (Eastern Daylight Time)',
-    uniqueVisitCount: 0, 
-    totalVisitCount: 0 }, 
-  "9sm5xK": { 
-    longURL: "http://www.google.com", 
-    userID: "a3dF1x", 
+    uniqueVisitCount: 0,
+    totalVisitCount: 0 },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "a3dF1x",
     dateCreated: 'Thu Oct 01 2020 21:47:06 GMT-0400 (Eastern Daylight Time)',
     uniqueVisitCount: 0,
     totalVisitCount: 0 }
@@ -60,11 +57,11 @@ app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
   if (!userID) {
     return res.redirect('/login');
-  };
+  }
   let userEmail = userDatabase[userID].email;
   const templateVars = { userID, userEmail, urls: urlDatabase };
   return res.render("urls_index", templateVars);
-})
+});
 
 // GET Input page for user longURL input
 app.get("/urls/new", (req, res) => {
@@ -75,14 +72,14 @@ app.get("/urls/new", (req, res) => {
   const userEmail = userDatabase[userID].email;
   const templateVars = { userEmail };
   res.render("urls_new", templateVars);
-})
+});
 
 // GET Page with longURL based on shortURL param input
 app.get("/urls/:shortURL", (req, res) => {
 
   // check if user user is logged in
   const isLogin = checkLogin(req, res);
-  let isAuthenticated; 
+  let isAuthenticated;
 
   // authenticate URL access only if user is logged in
   if (isLogin === true) {
@@ -100,13 +97,13 @@ app.get("/urls/:shortURL", (req, res) => {
   } else {
     return;
   }
-})
+});
 
 // GET User register page
 app.get("/register", (req, res) => {
   const templateVars = { userEmail: null };
   res.render("register", templateVars);
-})
+});
 
 app.get("/login", (req, res) => {
   const userID = req.session.user_id;
@@ -115,7 +112,7 @@ app.get("/login", (req, res) => {
   } else {
     res.render("login", { userEmail: null});
   }
-})
+});
 
 // GET redirect to longURL webpage based on shortURL param input
 app.get("/u/:shortURL", (req, res) => {
@@ -140,14 +137,14 @@ app.get("/u/:shortURL", (req, res) => {
     return res.status(404).send('<h3>Error: Invalid URL</h3>');
   }
 
-})
+});
 
 // ------------ POST ------------
 
 
 // POST post new longURL and create shortURL
-app.post("/urls", (req, res) => {  
-  // Deny request if user not logged in  
+app.post("/urls", (req, res) => {
+  // Deny request if user not logged in
   const isLogin = checkLogin(req, res);
 
   if (isLogin === true) {
@@ -165,13 +162,13 @@ app.post("/urls", (req, res) => {
     return;
   }
 
-})
+});
 
 // POST Update longURL of a shortURL
 app.post("/urls/:shortURL", (req, res) => {
   // check if user user is logged in
   const isLogin = checkLogin(req, res);
-  let isAuthenticated; 
+  let isAuthenticated;
 
   // authenticate URL access only if user is logged in
   if (isLogin === true) {
@@ -190,11 +187,11 @@ app.post("/urls/:shortURL", (req, res) => {
 
 
 // POST / DELETE shortURL: longURL data in urlDatabase
-app.post("/urls/:shortURL/delete", (req, res) => { 
+app.post("/urls/:shortURL/delete", (req, res) => {
 
   // check if user user is logged in
   const isLogin = checkLogin(req, res);
-  let isAuthenticated; 
+  let isAuthenticated;
 
   // authenticate URL access only if user is logged in
   if (isLogin === true) {
@@ -204,17 +201,17 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
   if (isLogin === true && isAuthenticated === true) {
     const shortURL = req.params.shortURL;
-    delete urlDatabase[shortURL];  
+    delete urlDatabase[shortURL];
     res.redirect(`/urls`);
   } else {
     return;
   }
-})
+});
 
 // POST User Login
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const userID = getUserByEmail(email, userDatabase); 
+  const userID = getUserByEmail(email, userDatabase);
   
   if (userID) {
     // check the match between input and database password
@@ -233,7 +230,7 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
-})
+});
 
 // POST User register
 app.post("/register", (req, res) => {
@@ -259,13 +256,13 @@ app.post("/register", (req, res) => {
   // create cookie
   req.session.user_id = id;
   res.redirect('/urls');
-})
+});
 
 // ERROR Handling
 
 app.get("/:path", (req, res) => {
   res.status(404).send('<h3>Error: Not Found</h3>');
-})
+});
 
 
 

@@ -6,7 +6,7 @@ const getUserByEmail = function(email, userDb) {
     }
   }
   return undefined;
-}
+};
 
 // Check if user is logged in
 
@@ -17,7 +17,7 @@ const checkLogin = function(req, res) {
     return res.status(403).send('<h3>Access denied: Please log in.</h3>');
   }
   return true;
-}
+};
 
 // Check if the shortURL path is valid, and if the user has access
 
@@ -32,10 +32,10 @@ const authenticateURLAccess = function(req, res, urlDb) {
 
   // check if the user has access to this URL
   if (urlDb[shortURL].userID !== userID) {
-    return res.status(403).send('<h3>Access denied: You do not have access to this URL.</h3>')
+    return res.status(403).send('<h3>Access denied: You do not have access to this URL.</h3>');
   }
 
   return true;
-}
+};
 
 module.exports = { getUserByEmail, checkLogin, authenticateURLAccess };
